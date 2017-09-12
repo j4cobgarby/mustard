@@ -2,7 +2,7 @@
  * Veryyy basic kernel
  */
 
-void kmain(void) {
+void boot(void) {
     const char *str = "Hello, world!";
     char *vid = (char*) 0xb8000;
     unsigned int i = 0, j = 0;
