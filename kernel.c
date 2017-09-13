@@ -25,8 +25,10 @@ unsigned int current_loc = 0;
 // Video memory starts at this address
 char *vidptr = (char*)0xb8000;
 
-const char *prompt = "mustard ~> ";
+const char *prompt = "<mustard> ";
+const unsigned int prompt_length = 10; // amount of characters in the prompt
 const unsigned short int prompt_attr = 0x0e;
+char *command;
 
 struct IDT_entry {
 	unsigned short int offset_lowerbits;
@@ -114,9 +116,18 @@ void printa(const char *str, const unsigned short int attr) {
 	}
 }
 
+void printca(const unsigned char ch, const unsigned short int attr) {
+    vidptr[current_loc++] = ch;
+    vidptr[current_loc++] = attr;
+}
+
 /** Prints something at the current cursor location */
 void print(const char *str) {
     printa(str, 0x07);
+}
+
+void printc(const unsigned char ch) {
+    printca(ch, 0x07);
 }
 
 /** Moves the cursor to the next line and shows a prompt */
@@ -140,7 +151,23 @@ void clear_screen(void) {
 	}
 }
 
-/** Handles keyboard input */
+int mfloor(float n) {
+    return n - ((int)n % 1);
+}
+
+int index2x(const unsigned int index) {
+    return index/2 % COLUMNS;
+}
+
+void update_cursor_graphic() {
+    unsigned int i = 1;
+    while (i < SCREENSIZE) {
+        //vidptr[i += 2] = (vidptr[i] >= 16 ? vidptr[i] - 0x10 : vidptr[i]);
+        vidptr[i += 2] = (vidptr[i] >= 0x10 ? vidptr[i] : vidptr[i] - 0x10);
+    }
+}
+
+/** Handles keyboard input, called from kernel.asm */
 void keyboard_handler_main(void) {
     unsigned char status;
     
@@ -163,23 +190,35 @@ void keyboard_handler_main(void) {
 			return;
 
 		if (keycode == ENTER_KEY_CODE) {
+            // submit command
 			np();
 			return;
-		}
+        }
+        
+        if (keycode == 14) { // Backspace
+            if (index2x(current_loc) > prompt_length) { // Embedded 'if', so that it returns even if they can't backspace
+                current_loc -= 2;
+                vidptr[current_loc] = ' ';
+                vidptr[current_loc + 1] = 0x07;
+            }
+            return;
+        }
 
         /** If this code is executed, it means the keycode is >= 0, and
          * it's not one of the special keys which do something different.
          * In this case, simply write the character to the screen
          */
-		vidptr[current_loc++] = keyboard_map[(unsigned char) keycode];
-		vidptr[current_loc++] = 0x07;
-	}
+        vidptr[current_loc++] = keyboard_map[(unsigned char) keycode];
+        vidptr[current_loc++] = 0x07;
+    }
+    
+    update_cursor_graphic();
 }
 
 void boot(void) {
 	const char *str = "Mustard kernel v0.05a";
 	clear_screen();
-	print(str);
+	printa(str, 0xe0);
 	nl();
 	np();
 
@@ -189,5 +228,7 @@ void boot(void) {
     /**
      * Make it so the user can continuously input
      */
-	while(1);
+	for(;;) {
+
+    }
 }
