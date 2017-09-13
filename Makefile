@@ -1,7 +1,7 @@
 ASM=nasm
 ASMFLAGS=-felf32
 CC=gcc
-CCFLAGS=-m32 -c
+CCFLAGS=-m32 -c -fno-stack-protector
 LD=ld
 LDFLAGS=-melf_i386
 
