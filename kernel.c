@@ -40,7 +40,6 @@ struct IDT_entry {
 
 struct IDT_entry IDT[IDT_SIZE];
 
-
 void idt_init(void) {
 	unsigned long keyboard_address;
 	unsigned long idt_address;
@@ -81,6 +80,12 @@ void idt_init(void) {
 	load_idt(idt_ptr);
 }
 
+void mv_cursor(int desired_location) {
+    vidptr[current_loc + 1] = 0x07;
+    current_loc = desired_location;
+    vidptr[current_loc + 1] = 0x70;
+}
+
 /**
  * Initializes the keyboard so the user can type
  */
@@ -109,16 +114,16 @@ void printa(const char *str, const unsigned short int attr) {
      * Stop when a null character is found, since strings are null-terminated
      */
 	while (str[i] != '\0') {
-        /** Add the character to the video memory */
-        vidptr[current_loc++] = str[i++];
-        /** Set the attributes of that character */
-		vidptr[current_loc++] = attr;
+        vidptr[current_loc] = str[i++];
+        vidptr[current_loc + 1] = attr;
+        mv_cursor(current_loc + 2);
 	}
 }
 
 void printca(const unsigned char ch, const unsigned short int attr) {
-    vidptr[current_loc++] = ch;
-    vidptr[current_loc++] = attr;
+    vidptr[current_loc] = ch;
+    vidptr[current_loc + 1] = attr;
+    mv_cursor(current_loc + 2);
 }
 
 /** Prints something at the current cursor location */
@@ -132,8 +137,8 @@ void printc(const unsigned char ch) {
 
 /** Moves the cursor to the next line and shows a prompt */
 void nl(void) {
-	unsigned int line_size = BYTES_PER_VID_ELEMENT * COLUMNS;
-    current_loc = current_loc + (line_size - current_loc % (line_size));
+    unsigned int line_size = BYTES_PER_VID_ELEMENT * COLUMNS;
+    mv_cursor(current_loc + (line_size - current_loc % (line_size)));
 }
 
 /** Convenience for newline then writing the prompt */
@@ -162,8 +167,10 @@ int index2x(const unsigned int index) {
 void update_cursor_graphic() {
     unsigned int i = 1;
     while (i < SCREENSIZE) {
-        //vidptr[i += 2] = (vidptr[i] >= 16 ? vidptr[i] - 0x10 : vidptr[i]);
-        vidptr[i += 2] = (vidptr[i] >= 0x10 ? vidptr[i] : vidptr[i] - 0x10);
+        if (vidptr[i] == 0x70) {
+            vidptr[i] = 0x07;
+        }
+        vidptr += 2;
     }
 }
 
@@ -197,9 +204,9 @@ void keyboard_handler_main(void) {
         
         if (keycode == 14) { // Backspace
             if (index2x(current_loc) > prompt_length) { // Embedded 'if', so that it returns even if they can't backspace
-                current_loc -= 2;
+                mv_cursor(current_loc - 2);
                 vidptr[current_loc] = ' ';
-                vidptr[current_loc + 1] = 0x07;
+                vidptr[current_loc + 1] = 0x70;
             }
             return;
         }
@@ -208,11 +215,10 @@ void keyboard_handler_main(void) {
          * it's not one of the special keys which do something different.
          * In this case, simply write the character to the screen
          */
-        vidptr[current_loc++] = keyboard_map[(unsigned char) keycode];
-        vidptr[current_loc++] = 0x07;
+        vidptr[current_loc] = keyboard_map[(unsigned char) keycode];
+        vidptr[current_loc + 1] = 0x07;
+        mv_cursor(current_loc + 2);
     }
-    
-    update_cursor_graphic();
 }
 
 void boot(void) {
