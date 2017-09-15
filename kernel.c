@@ -13,7 +13,7 @@
 
 #define ENTER_KEY_CODE 0x1C
 
-extern unsigned char keyboard_map[128];
+extern const unsigned char keyboard_map[128];
 extern void keyboard_handler(void);
 extern char read_port(unsigned short port);
 extern void write_port(unsigned short port, unsigned char data);
@@ -25,7 +25,6 @@ unsigned int current_loc = 0;
 // Video memory starts at this address
 char *vidptr = (char*)0xb8000;
 
-const char *prompt = "<mustard> ";
 const unsigned int prompt_length = 10; // amount of characters in the prompt
 const unsigned short int prompt_attr = 0x0e;
 char *command;
@@ -140,7 +139,7 @@ void nl(void) {
 /** Convenience for newline then writing the prompt */
 void np(void) {
     nl();
-    printa(prompt, prompt_attr);
+    printa("<mustard> ", prompt_attr);
 }
 
 /** Basically sets everything in the visible video memory to a space */
@@ -172,6 +171,7 @@ void update_cursor_graphic() {
 
 /** Handles keyboard input, called from kernel.asm */
 void keyboard_handler_main(void) {
+    keyboard_init();
     unsigned char status;
 
     /** Will be set to the keycode of the key which is pressed, if a key is pressed */
@@ -207,7 +207,16 @@ void keyboard_handler_main(void) {
 		        }
 						update_cursor_graphic();
 		        return;
-		    }
+            }
+            
+            if (keycode == 42 || keycode == 54) {
+                /**
+                 * Shift key pressed (right OR left)
+                 */
+                printc('s');
+                update_cursor_graphic();
+                return;
+            }
 
 		    /** If this code is executed, it means the keycode is >= 0, and
 		     * it's not one of the special keys which do something different.
@@ -221,9 +230,9 @@ void keyboard_handler_main(void) {
 }
 
 void boot(void) {
-	const char *str = "Mustard kernel v0.06a";
-	clear_screen();
-	printa(str, 0xe0);
+    char *splash = "--- Mustard kernel ---";
+    clear_screen();
+	printa(splash, 0xe0);
 	nl();
 	np();
 
