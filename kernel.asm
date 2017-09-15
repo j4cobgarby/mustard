@@ -1,12 +1,13 @@
 bits 32
 section .data
-        ; multiboot header for grub
-        align 4
-        dd 0x1BADB002              	; magic num
-        dd 0x00                    	; flags
-        dd -(0x1BADB002 + 0x00)		; checksum, should = 0
+	; multiboot header for grub
+	align 4
+	dd 0x1BADB002              	; magic num
+	dd 0x00                    	; flags
+	dd -(0x1BADB002 + 0x00)		; checksum, should = 0
 
 section .text
+
 global start
 global keyboard_handler
 global read_port

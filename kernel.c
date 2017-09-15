@@ -180,13 +180,13 @@ void keyboard_handler_main(void) {
     unsigned char status;
 
     /** Will be set to the keycode of the key which is pressed, if a key is pressed */
-		char keycode;
+    char keycode;
 
     /** Sending end-of-interrup acknowledgement */
-		write_port(0x20, 0x20);
+    write_port(0x20, 0x20);
 
     /** Read the status from the keyboard status port */
-		status = read_port(KEYBOARD_STATUS_PORT);
+    status = read_port(KEYBOARD_STATUS_PORT);
 
     /** If the lowest bit of the status is 0, the buffer must be empty so there isn't any data,
      * so only continue with this if there is actually a key pressed
@@ -194,65 +194,65 @@ void keyboard_handler_main(void) {
     if (status & 0x01) {
         keycode = read_port(KEYBOARD_DATA_PORT);
 
-            if (keycode < 0)
-                return;
+        if (keycode < 0)
+            return;
 
-            if (keycode == ENTER_KEY_CODE) {
-                // submit command
-                nl();
-                for (int i = 0; i < 512; i++) {
-                    if (command[i] != 0) {
-                        printca(command[i], 0x0f);
-                    }
-                }
-                np();
-                update_cursor_graphic();
-                return;
-		    }
-
-		    if (keycode == 14) { // Backspace
-		        if (index2x(current_loc) > prompt_length) { // Embedded 'if', so that it returns even if they can't backspace
-		            current_loc -= 2;
-		            vidptr[current_loc] = ' ';
-		            vidptr[current_loc + 1] = 0x07;
-		        }
-						update_cursor_graphic();
-		        return;
-            }
-            
-            if (keycode == 42 || keycode == 54) {
-                /**
-                 * Shift key pressed (right OR left)
-                 */
-                shift_down = !shift_down;
-                update_cursor_graphic();
-                return;
-            }
-
-		    /** If this code is executed, it means the keycode is >= 0, and
-		     * it's not one of the special keys which do something different.
-		     * In this case, simply write the character to the screen
-		     */
-            if (shift_down) {
-                vidptr[current_loc++] = keyboard_map_shift[(unsigned char) keycode];
-                for (int i = 0; i < 512; i++) {
-                    if (command[i] == 0) {
-                        if (i >= 511) break;
-                        command[i] = keyboard_map_shift[(unsigned char) keycode];
-                        break;
-                    }
-                }
-            } else {
-                vidptr[current_loc++] = keyboard_map[(unsigned char) keycode];
-                for (int i = 0; i < 512; i++) {
-                    if (command[i] == 0) {
-                        if (i >= 511) break;
-                        command[i] = keyboard_map[(unsigned char) keycode];
-                        break;
-                    }
+        if (keycode == ENTER_KEY_CODE) {
+            // submit command
+            nl();
+            for (int i = 0; i < 512; i++) {
+                if (command[i] != 0) {
+                    printca(command[i], 0x0f);
                 }
             }
-		    vidptr[current_loc++] = 0x07;
+            np();
+            update_cursor_graphic();
+            return;
+        }
+
+        if (keycode == 14) { // Backspace
+            if (index2x(current_loc) > prompt_length) { // Embedded 'if', so that it returns even if they can't backspace
+                current_loc -= 2;
+                vidptr[current_loc] = ' ';
+                vidptr[current_loc + 1] = 0x07;
+            }
+                    update_cursor_graphic();
+            return;
+        }
+        
+        if (keycode == 42 || keycode == 54) {
+            /**
+             * Shift key pressed (right OR left)
+             */
+            shift_down = !shift_down;
+            update_cursor_graphic();
+            return;
+        }
+
+        /** If this code is executed, it means the keycode is >= 0, and
+         * it's not one of the special keys which do something different.
+         * In this case, simply write the character to the screen
+         */
+        if (shift_down) {
+            vidptr[current_loc++] = keyboard_map_shift[(unsigned char) keycode];
+            for (int i = 0; i < 512; i++) {
+                if (command[i] == 0) {
+                    if (i >= 511) break;
+                    command[i] = keyboard_map_shift[(unsigned char) keycode];
+                    break;
+                }
+            }
+        } else {
+            vidptr[current_loc++] = keyboard_map[(unsigned char) keycode];
+            for (int i = 0; i < 512; i++) {
+                if (command[i] == 0) {
+                    if (i >= 511) break;
+                    command[i] = keyboard_map[(unsigned char) keycode];
+                    break;
+                }
+            }
+        }
+        vidptr[current_loc++] = 0x07;
     }
 
     update_cursor_graphic();
