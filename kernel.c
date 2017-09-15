@@ -14,6 +14,7 @@
 #define ENTER_KEY_CODE 0x1C
 
 extern const unsigned char keyboard_map[128];
+extern const unsigned char keyboard_map_shift[128];
 extern void keyboard_handler(void);
 extern char read_port(unsigned short port);
 extern void write_port(unsigned short port, unsigned char data);
@@ -23,12 +24,13 @@ extern void load_idt(unsigned long *idt_ptr);
 unsigned int current_loc = 0;
 
 // Video memory starts at this address
-char *vidptr = (char*)0xb8000;
+char *vidptr = (char*) 0xb8000;
 
 const unsigned int prompt_length = 10; // amount of characters in the prompt
 const unsigned short int prompt_attr = 0x0e;
-char *command;
-char *command_history[255];
+char command[512]; // max 512 bytes in a command
+
+short int shift_down = 0;
 
 struct IDT_entry {
 	unsigned short int offset_lowerbits;
@@ -138,6 +140,9 @@ void nl(void) {
 
 /** Convenience for newline then writing the prompt */
 void np(void) {
+    for (int i = 0; i < 512; i++) {
+        command[i] = 0; // clear command
+    }
     nl();
     printa("<mustard> ", prompt_attr);
 }
@@ -189,14 +194,20 @@ void keyboard_handler_main(void) {
     if (status & 0x01) {
         keycode = read_port(KEYBOARD_DATA_PORT);
 
-				if (keycode < 0)
-					return;
+            if (keycode < 0)
+                return;
 
-				if (keycode == ENTER_KEY_CODE) {
-          // submit command
-					np();
-					update_cursor_graphic();
-					return;
+            if (keycode == ENTER_KEY_CODE) {
+                // submit command
+                nl();
+                for (int i = 0; i < 512; i++) {
+                    if (command[i] != 0) {
+                        printca(command[i], 0x0f);
+                    }
+                }
+                np();
+                update_cursor_graphic();
+                return;
 		    }
 
 		    if (keycode == 14) { // Backspace
@@ -213,7 +224,7 @@ void keyboard_handler_main(void) {
                 /**
                  * Shift key pressed (right OR left)
                  */
-                printc('s');
+                shift_down = !shift_down;
                 update_cursor_graphic();
                 return;
             }
@@ -222,7 +233,25 @@ void keyboard_handler_main(void) {
 		     * it's not one of the special keys which do something different.
 		     * In this case, simply write the character to the screen
 		     */
-		    vidptr[current_loc++] = keyboard_map[(unsigned char) keycode];
+            if (shift_down) {
+                vidptr[current_loc++] = keyboard_map_shift[(unsigned char) keycode];
+                for (int i = 0; i < 512; i++) {
+                    if (command[i] == 0) {
+                        if (i >= 511) break;
+                        command[i] = keyboard_map_shift[(unsigned char) keycode];
+                        break;
+                    }
+                }
+            } else {
+                vidptr[current_loc++] = keyboard_map[(unsigned char) keycode];
+                for (int i = 0; i < 512; i++) {
+                    if (command[i] == 0) {
+                        if (i >= 511) break;
+                        command[i] = keyboard_map[(unsigned char) keycode];
+                        break;
+                    }
+                }
+            }
 		    vidptr[current_loc++] = 0x07;
     }
 
@@ -232,7 +261,7 @@ void keyboard_handler_main(void) {
 void boot(void) {
     char *splash = "--- Mustard kernel ---";
     clear_screen();
-	printa(splash, 0xe0);
+	printa(splash, 0x1e0);
 	nl();
 	np();
 
