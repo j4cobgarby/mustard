@@ -12,16 +12,14 @@ char command[COMMAND_MAX_SIZE];
 
 short int shift_down = 0;
 
-void execute(const char *command) {
-    
-}
+void execute(const char *command);
 
 /** Convenience for newline then writing the prompt */
 void np(void) {
     for (int i = 0; i < COMMAND_MAX_SIZE; i++) {
         command[i] = 0; // clear command
     }
-    printa("<mustard> ", 0x0e);
+    printa("<mustard> ", ATTR_ACCENT);
 }
 
 /** Handles keyboard input, called from kernel.asm */
@@ -44,17 +42,14 @@ void keyboard_handler_main(void) {
     if (status & 0x01) {
         keycode = read_port(KEYBOARD_DATA_PORT);
 
-        if (keycode < 0 || keyboard_map[keycode] == 0)
+        if (keycode < 0)
             return;
 
         if (keycode == ENTER_KEY_CODE) {
             // submit command
+            if (current_loc >= 80 * 23 * 2) scroll(2);
             nl();
-            for (int i = 0; i < COMMAND_MAX_SIZE; i++) {
-                if (command[i] != 0) {
-                    printca(command[i], 0x0f);
-                }
-            }
+            execute(command);
             nl();
             np();
             update_cursor_graphic();
@@ -66,7 +61,7 @@ void keyboard_handler_main(void) {
             if (index2x(current_loc) > prompt_length) {
                 current_loc -= 2;
                 vidptr[current_loc] = ' ';
-                vidptr[current_loc + 1] = 0x07;
+                vidptr[current_loc + 1] = ATTR_NORMAL;
             }
             update_cursor_graphic();
             return;
@@ -88,6 +83,8 @@ void keyboard_handler_main(void) {
             scroll(1);
             return;
         }
+
+        if (keyboard_map[keycode] == 0) return;
 
         /** If this code is executed, it means the keycode is >= 0, and
          * it's not one of the special keys which do something different.
@@ -112,10 +109,20 @@ void keyboard_handler_main(void) {
                 }
             }
         }
-        vidptr[current_loc++] = 0x07;
+        vidptr[current_loc++] = ATTR_NORMAL;
     }
 
     update_cursor_graphic();
+}
+
+/**
+ * Execute a command
+ */
+void execute(const char *command) {
+    for (int i = 0; i < COMMAND_MAX_SIZE; i++) {
+        if (command[i] == 0) break;
+        printca(command[i], ATTR_BRIGHT);
+    }
 }
 
 #endif

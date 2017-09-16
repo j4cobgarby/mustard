@@ -12,6 +12,15 @@
 #define INTERRUPT_GATE 0x8e
 #define KERNEL_CODE_SEGMENT_OFFSET 0x08
 
+// Attributes
+
+#define ATTR_NORMAL 0x07 // Grey on black
+#define ATTR_ACCENT 0x0e // Yellow on black
+#define ATTR_REVERSE 0x70 // Reversed normal
+#define ATTR_ACC_REV 0xe0 // Reversed accent
+#define ATTR_BRIGHT 0x0f // White on black
+#define ATTR_BRI_REV 0xf0 // Reversed bright
+
 extern const unsigned char keyboard_map[128];
 extern const unsigned char keyboard_map_shift[128];
 extern void keyboard_handler(void);
@@ -102,7 +111,7 @@ void idt_init(void) {
 void keyboard_init(void) {
     // 0x21 is the keyboard thing in the IDT
     // 0xFD enables keyboard input only (which is IRQ1)
-	write_port(0x21 , 0xFD);
+	write_port(0x21 , 0xfd);
 }
 
 /** Prints at the cursor location with a particular attribute */
@@ -138,11 +147,11 @@ void printca(const unsigned char ch, const unsigned short int attr) {
 
 /** Prints something at the current cursor location */
 void print(const char *str) {
-    printa(str, 0x07);
+    printa(str, ATTR_NORMAL);
 }
 
 void printc(const unsigned char ch) {
-    printca(ch, 0x07);
+    printca(ch, ATTR_NORMAL);
 }
 
 /** Moves the cursor to the next line and shows a prompt */
@@ -156,7 +165,7 @@ void clear_screen(void) {
 	unsigned int i = 0;
 	while (i < SCREENSIZE) {
 		vidptr[i++] = ' ';
-		vidptr[i++] = 0x07;
+		vidptr[i++] = ATTR_NORMAL;
 	}
 }
 
@@ -174,12 +183,12 @@ void update_cursor_graphic() {
      */
 	unsigned int i = 1;
 	while (i < SCREENSIZE) {
-		if (vidptr[i] == 0x70) {
-			vidptr[i] = 0x07;
+		if (vidptr[i] == ATTR_REVERSE) {
+			vidptr[i] = ATTR_NORMAL;
 		}
 		i += 2;
 	}
-	vidptr[current_loc + 1] = 0x70;
+	vidptr[current_loc + 1] = ATTR_REVERSE;
 }
 
 void scroll(int lines) {
@@ -212,7 +221,7 @@ void scroll(int lines) {
             /**
              * Otherwise create a blank line at the bottom
              */
-            vidptr[va] = (va % 2 == 0 ? ' ' : 0x07);
+            vidptr[va] = (va % 2 == 0 ? ' ' : ATTR_NORMAL);
         }
     }
 

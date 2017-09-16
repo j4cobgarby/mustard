@@ -4,9 +4,9 @@
 
 void boot(void) {
     // splash
-    char *splash = "--- Mustard kernel ---";
+    char *splash = "Mustard kernel v0.9";
     clear_screen();
-	printa(splash, 0x1e0);
+	printa(splash, ATTR_ACC_REV);
 	nl();
 	np();
 
