@@ -8,7 +8,6 @@
 #define COMMAND_MAX_SIZE 1024
 
 const unsigned int prompt_length = 10; // amount of characters in the prompt
-const unsigned short int prompt_attr = 0x0e;
 char command[COMMAND_MAX_SIZE];
 
 short int shift_down = 0;
@@ -22,7 +21,7 @@ void np(void) {
     for (int i = 0; i < COMMAND_MAX_SIZE; i++) {
         command[i] = 0; // clear command
     }
-    printa("<mustard> ", prompt_attr);
+    printa("<mustard> ", 0x0e);
 }
 
 /** Handles keyboard input, called from kernel.asm */
@@ -45,16 +44,8 @@ void keyboard_handler_main(void) {
     if (status & 0x01) {
         keycode = read_port(KEYBOARD_DATA_PORT);
 
-        if (keyboard_map[keycode] == 0) {
+        if (keycode < 0 || keyboard_map[keycode] == 0)
             return;
-        }
-
-        if (keycode < 0)
-            return;
-
-        if (keycode & 0x80) {
-            printca('r', 0x0a);
-        }
 
         if (keycode == ENTER_KEY_CODE) {
             // submit command
@@ -72,7 +63,7 @@ void keyboard_handler_main(void) {
 
         if (keycode == 14) { // Backspace
             // TODO: Make backspace pop the last character from the command array
-            if (index2x(current_loc) > prompt_length) { // Embedded 'if', so that it returns even if they can't backspace
+            if (index2x(current_loc) > prompt_length) {
                 current_loc -= 2;
                 vidptr[current_loc] = ' ';
                 vidptr[current_loc + 1] = 0x07;
