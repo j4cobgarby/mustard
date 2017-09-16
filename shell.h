@@ -22,7 +22,6 @@ void np(void) {
     for (int i = 0; i < COMMAND_MAX_SIZE; i++) {
         command[i] = 0; // clear command
     }
-    nl();
     printa("<mustard> ", prompt_attr);
 }
 
@@ -61,6 +60,7 @@ void keyboard_handler_main(void) {
                     printca(command[i], 0x0f);
                 }
             }
+            nl();
             np();
             update_cursor_graphic();
             return;
@@ -83,6 +83,14 @@ void keyboard_handler_main(void) {
              */
             shift_down = !shift_down;
             update_cursor_graphic();
+            return;
+        }
+
+        if (keycode == 80) {
+            /**
+             * Down arrow
+             */
+            scroll(1);
             return;
         }
 

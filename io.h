@@ -50,7 +50,7 @@ void nl(void);
 void clear_screen(void);
 int index2x(const unsigned int index);
 void update_cursor_graphic();
-void scrollup(const int lines);
+//void scrollup(const unsigned short int lines);
 
 /*
  * Function implementations
@@ -177,5 +177,56 @@ void update_cursor_graphic() {
 	}
 	vidptr[current_loc + 1] = 0x70;
 }
+
+void scroll(int lines) {
+    if (lines == 25) {
+        clear_screen();
+        return;
+    }
+
+    int offset = lines * COLUMNS * BYTES_PER_VID_ELEMENT;
+
+    for (int va = 0; va < SCREENSIZE; va++) {
+        if (va + offset < SCREENSIZE) {
+            char temp = vidptr[va + offset];
+            vidptr[va] = temp;
+        } else {
+            vidptr[va] = (va % 2 == 0 ? ' ' : 0x07);
+        }
+    }
+
+    /**
+     * Move cursor up by the offset
+     */
+    current_loc -= (current_loc - offset >= 0 ? offset : current_loc);
+    update_cursor_graphic();
+}
+
+#if (0)
+void scroll(int lines) {
+    /**
+     * Basically will just, for every character in the video memory, pull it backwards by 80*5
+     * memory positions.
+     * This'll work because the screen is 80 characters wide.
+     */
+    if (lines == 25) {
+        /**
+         * Scrolling up by 25 lines is equivalent to clearing the screen, since there are
+         * 25 lines on the screen.
+         */
+        clear_screen();
+        return;
+    }
+
+    const unsigned int offset = lines * COLUMNS;
+    for (int va = 0; va < SCREENSIZE; va++) {
+        if (va + offset < SCREENSIZE) {
+            vidptr[va] = vidptr[va + offset];
+        } else {
+            vidptr[va] = ' ';
+        }
+    }
+}
+#endif
 
 #endif
