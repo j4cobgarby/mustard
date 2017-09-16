@@ -27,7 +27,7 @@ void np(void) {
 
 /** Handles keyboard input, called from kernel.asm */
 void keyboard_handler_main(void) {
-    keyboard_init();
+    //keyboard_init();
     unsigned char status;
 
     /** Will be set to the keycode of the key which is pressed, if a key is pressed */
@@ -44,6 +44,10 @@ void keyboard_handler_main(void) {
      */
     if (status & 0x01) {
         keycode = read_port(KEYBOARD_DATA_PORT);
+
+        if (keyboard_map[keycode] == 0) {
+            return;
+        }
 
         if (keycode < 0)
             return;
