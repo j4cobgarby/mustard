@@ -36,6 +36,25 @@ struct IDT_entry {
 
 struct IDT_entry IDT[IDT_SIZE];
 
+/*
+ * Function declerations, all defined below
+ */
+
+void idt_init(void);
+void keyboard_init(void);
+void printa(const char *str, const unsigned short int attr);
+void printca(const unsigned char ch, const unsigned short int attr);
+void print(const char *str);
+void printc(const unsigned char ch);
+void nl(void);
+void clear_screen(void);
+int index2x(const unsigned int index);
+void update_cursor_graphic();
+void scrollup(const int lines);
+
+/*
+ * Function implementations
+ */ 
 
 void idt_init(void) {
 	unsigned long keyboard_address;
