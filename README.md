@@ -12,6 +12,12 @@ I can see a file system and a shell being implemented fairly soon, but the other
 
 # Building
 
+Installing dependencies
+
+```
+sudo apt-get install qemu nasm grub
+```
+
 Navigate to the root of the project (the directory with the Makefile in it)
 
 ```
@@ -20,12 +26,6 @@ make all
 ```
 
 # Emulating
-
-Installing dependencies
-
-```
-sudo apt-get install qemu nasm grub
-```
 
 Assuming you've already built the kernel, and it's in `dist/`
 

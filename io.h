@@ -160,6 +160,7 @@ void clear_screen(void) {
 	}
 }
 
+/** Get the x-coordinate of the cursor based on its position in the video memory */
 int index2x(const unsigned int index) {
     return index/2 % COLUMNS;
 }
@@ -168,6 +169,9 @@ int index2x(const unsigned int index) {
  * Call this every time the cursor moves to update the visible cursor
  */
 void update_cursor_graphic() {
+    /**
+     * Use i to iterate the characters of the screen, and their attributes
+     */
 	unsigned int i = 1;
 	while (i < SCREENSIZE) {
 		if (vidptr[i] == 0x70) {
@@ -179,54 +183,44 @@ void update_cursor_graphic() {
 }
 
 void scroll(int lines) {
+    /**
+     * If the amount of lines to scroll is 25, everything will be scrolled out of view, so
+     * it may as well just clear the screen
+     */
     if (lines == 25) {
         clear_screen();
         return;
     }
 
+    /**
+     * Calculate the offset which will be how far characters and the cursor are shifted back
+     */
     int offset = lines * COLUMNS * BYTES_PER_VID_ELEMENT;
 
+    /**
+     * For every character (and its attribute) on the screen ..
+     */
     for (int va = 0; va < SCREENSIZE; va++) {
+        /** 
+         * If the current address + the offset is on the screen, that means that a character is
+         * being moved, as opposed to new blank lines being created at the bottom
+         */
         if (va + offset < SCREENSIZE) {
             char temp = vidptr[va + offset];
             vidptr[va] = temp;
         } else {
+            /**
+             * Otherwise create a blank line at the bottom
+             */
             vidptr[va] = (va % 2 == 0 ? ' ' : 0x07);
         }
     }
 
     /**
-     * Move cursor up by the offset
+     * Move cursor up by the offset and update it visually
      */
     current_loc -= (current_loc - offset >= 0 ? offset : current_loc);
     update_cursor_graphic();
 }
-
-#if (0)
-void scroll(int lines) {
-    /**
-     * Basically will just, for every character in the video memory, pull it backwards by 80*5
-     * memory positions.
-     * This'll work because the screen is 80 characters wide.
-     */
-    if (lines == 25) {
-        /**
-         * Scrolling up by 25 lines is equivalent to clearing the screen, since there are
-         * 25 lines on the screen.
-         */
-        clear_screen();
-        return;
-    }
-
-    const unsigned int offset = lines * COLUMNS;
-    for (int va = 0; va < SCREENSIZE; va++) {
-        if (va + offset < SCREENSIZE) {
-            vidptr[va] = vidptr[va + offset];
-        } else {
-            vidptr[va] = ' ';
-        }
-    }
-}
-#endif
 
 #endif
