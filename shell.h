@@ -3,12 +3,15 @@
 
 #include "io.h"
 
-#define ENTER_KEY_CODE 0x1C
+#define ENTER_KEY_CODE    0x1C
 
-#define COMMAND_MAX_SIZE 1024
+#define COMMAND_MAX_SIZE  1024
+#define BUFFER_MAX_WIDTH  512
+#define BUFFER_MAX_HEIGHT 1024
 
 const unsigned int prompt_length = 10; // amount of characters in the prompt
 char command[COMMAND_MAX_SIZE];
+char buffer[BUFFER_MAX_HEIGHT][BUFFER_MAX_WIDTH];
 
 short int shift_down = 0;
 
