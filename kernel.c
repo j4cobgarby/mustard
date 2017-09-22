@@ -1,21 +1,22 @@
-/**
- * Veryyy basic kernel
- */
+#include "keyboard_map.h"
+#include "io.h"
+#include "shell.h"
 
 void boot(void) {
-    const char *str = "Hello, world!";
-    char *vid = (char*) 0xb8000;
-    unsigned int i = 0, j = 0;
+    // splash
+    char *splash = "Mustard kernel v0.9";
+    clear_screen();
+	printa(splash, ATTR_ACC_REV);
+	nl();
+    np();
 
-    for (unsigned int vidpos = 0; vidpos < 80 * 25 * 2; vidpos += 2) {
-        vid[vidpos] = ' ';
-        vid[vidpos + 1] = 0x0f;
-    }
+    // initialize IDT for responses to interrupts and exceptions
+    idt_init();
+    // initialize driver for keyboard
+    keyboard_init();
+    // draw cursor
+	update_cursor_graphic();
 
-    for (unsigned int strpos = 0, vidpos = 0; str[strpos] != 0; strpos++) {
-        vid[vidpos] = str[strpos];
-        vid[vidpos + 1] = 0x0f;
-        vidpos += 2;
-    }
-    return;
+    // event loop
+	while(1);
 }

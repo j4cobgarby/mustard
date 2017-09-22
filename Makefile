@@ -1,7 +1,7 @@
 ASM=nasm
 ASMFLAGS=-felf32
 CC=gcc
-CCFLAGS=-m32 -c
+CCFLAGS=-m32 -c -fno-stack-protector
 LD=ld
 LDFLAGS=-melf_i386
 
@@ -12,11 +12,17 @@ all:
 	$(CC) $(CCFLAGS) kernel.c -o obj/kc.o
 	$(LD) $(LDFLAGS) -T link.ld -o dist/kernel obj/kasm.o obj/kc.o
 
+iso:
+	cp dist/kernel isodir/boot/mustard.bin
+	grub-mkrescue -o mustard.iso isodir
+
 run:
 	qemu-system-i386 -kernel dist/kernel
 
 clean:
-	rm -f obj/*
-	rm -f dist/*
-	rm -rf obj
-	rm -rf dist
+	@rm -f obj/*
+	@rm -f dist/*
+	@rm -f mustard.iso
+	@rm -f isodir/boot/mustard.bin
+	@rm -rf obj
+	@rm -rf dist
