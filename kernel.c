@@ -8,7 +8,7 @@ void boot(void) {
     clear_screen();
 	printa(splash, ATTR_ACC_REV);
 	nl();
-	np();
+    np();
 
     // initialize IDT for responses to interrupts and exceptions
     idt_init();
@@ -18,5 +18,5 @@ void boot(void) {
 	update_cursor_graphic();
 
     // event loop
-	for(;;);
+	while(1);
 }
