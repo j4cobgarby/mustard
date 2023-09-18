@@ -1,3 +1,5 @@
+# For now I've abandoned this project, and am currently working on [a new kernel](https://github.com/j4cobgarby/fors-kernel)
+
 # [Mustard](https://en.wikipedia.org/wiki/List_of_Cluedo_characters#Colonel_Mustard) kernel
 
 A _very_ basic kernel written in NASM and C, with probably some C++ and other higher level languages in the future. At the moment it's extememely lacking in features, but I hope to implement most if not all of these:
